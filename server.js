@@ -8,7 +8,6 @@ app.use(express.json());
 
 // ═══════════════════════════════════════════════════════════════
 // DATABASE CONFIG
-// Credenciales se configuran como variables de entorno en Render
 // ═══════════════════════════════════════════════════════════════
 const SERVER = process.env.DB_SERVER || "sql.ar-vida.com.ar";
 const USER = process.env.DB_USER;
@@ -38,7 +37,6 @@ function makeConfig(database) {
   };
 }
 
-// Pool cache
 const pools = {};
 
 async function getPool(producto) {
@@ -61,7 +59,7 @@ app.get("/", (req, res) => {
   res.json({ status: "ok", productos: Object.keys(DB_MAP), server: SERVER });
 });
 
-// GET /api/leads/:producto — Lista de leads con filtros
+// GET /api/leads/:producto
 app.get("/api/leads/:producto", async (req, res) => {
   try {
     const pool = await getPool(req.params.producto);
@@ -70,7 +68,7 @@ app.get("/api/leads/:producto", async (req, res) => {
     let query = `
       SELECT 
         ID AS id,
-        Fecha_Ingreso_Lead AS fechaIngreso,
+        Fecha_Ingreso_Leads AS fechaIngreso,
         Nombre AS nombre,
         Apellido AS apellido,
         Correo_Electronico AS email,
@@ -95,11 +93,11 @@ app.get("/api/leads/:producto", async (req, res) => {
       request.input("campana", sql.NVarChar, campana);
     }
     if (fechaDesde) {
-      query += ` AND Fecha_Ingreso_Lead >= @fechaDesde`;
+      query += ` AND Fecha_Ingreso_Leads >= @fechaDesde`;
       request.input("fechaDesde", sql.DateTime, new Date(fechaDesde));
     }
     if (fechaHasta) {
-      query += ` AND Fecha_Ingreso_Lead <= @fechaHasta`;
+      query += ` AND Fecha_Ingreso_Leads <= @fechaHasta`;
       request.input("fechaHasta", sql.DateTime, new Date(fechaHasta + "T23:59:59"));
     }
     if (provincia) {
@@ -115,11 +113,10 @@ app.get("/api/leads/:producto", async (req, res) => {
       request.input("neotel", sql.Char, neotel);
     }
 
-    query += ` ORDER BY Fecha_Ingreso_Lead DESC`;
+    query += ` ORDER BY Fecha_Ingreso_Leads DESC`;
 
     const result = await request.query(query);
 
-    // Formatear fechas
     const leads = result.recordset.map((r) => ({
       ...r,
       fechaIngreso: r.fechaIngreso ? new Date(r.fechaIngreso).toISOString().split("T")[0] : null,
@@ -133,7 +130,7 @@ app.get("/api/leads/:producto", async (req, res) => {
   }
 });
 
-// GET /api/stats/:producto — Estadísticas para gráficos
+// GET /api/stats/:producto
 app.get("/api/stats/:producto", async (req, res) => {
   try {
     const pool = await getPool(req.params.producto);
@@ -143,11 +140,11 @@ app.get("/api/stats/:producto", async (req, res) => {
     const { fechaDesde, fechaHasta } = req.query;
 
     if (fechaDesde) {
-      where += ` AND Fecha_Ingreso_Lead >= @fechaDesde`;
+      where += ` AND Fecha_Ingreso_Leads >= @fechaDesde`;
       request.input("fechaDesde", sql.DateTime, new Date(fechaDesde));
     }
     if (fechaHasta) {
-      where += ` AND Fecha_Ingreso_Lead <= @fechaHasta`;
+      where += ` AND Fecha_Ingreso_Leads <= @fechaHasta`;
       request.input("fechaHasta", sql.DateTime, new Date(fechaHasta + "T23:59:59"));
     }
 
@@ -155,8 +152,8 @@ app.get("/api/stats/:producto", async (req, res) => {
       SELECT COUNT(*) AS totalLeads,
              COUNT(DISTINCT Campana) AS totalCampanas,
              COUNT(DISTINCT Provincia) AS totalProvincias,
-             MIN(Fecha_Ingreso_Lead) AS primerLead,
-             MAX(Fecha_Ingreso_Lead) AS ultimoLead
+             MIN(Fecha_Ingreso_Leads) AS primerLead,
+             MAX(Fecha_Ingreso_Leads) AS ultimoLead
       FROM Leads_Final ${where};
 
       SELECT Campana AS campana, COUNT(*) AS cantidad
@@ -167,9 +164,9 @@ app.get("/api/stats/:producto", async (req, res) => {
       FROM Leads_Final ${where}
       GROUP BY Provincia ORDER BY cantidad DESC;
 
-      SELECT CONVERT(VARCHAR(7), Fecha_Ingreso_Lead, 120) AS mes, COUNT(*) AS cantidad
+      SELECT CONVERT(VARCHAR(7), Fecha_Ingreso_Leads, 120) AS mes, COUNT(*) AS cantidad
       FROM Leads_Final ${where}
-      GROUP BY CONVERT(VARCHAR(7), Fecha_Ingreso_Lead, 120) ORDER BY mes;
+      GROUP BY CONVERT(VARCHAR(7), Fecha_Ingreso_Leads, 120) ORDER BY mes;
 
       SELECT LTRIM(RTRIM(Neotel)) AS neotel, COUNT(*) AS cantidad
       FROM Leads_Final ${where}
@@ -192,7 +189,7 @@ app.get("/api/stats/:producto", async (req, res) => {
   }
 });
 
-// GET /api/filters/:producto — Opciones para dropdowns
+// GET /api/filters/:producto
 app.get("/api/filters/:producto", async (req, res) => {
   try {
     const pool = await getPool(req.params.producto);
