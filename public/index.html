@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leads Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#06090f;--card:#111a2e;--border:#1b2845;--text:#e8ecf4;--muted:#8896b0;--dim:#566580;--blue:#3b82f6;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--purple:#8b5cf6;--cyan:#06b6d4}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:"Outfit",sans-serif;min-height:100vh}
+.hdr{padding:28px 36px 0;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px}
+.hdr h1{font-size:28px;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,var(--text),var(--muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr .sub{color:var(--dim);font-size:13px;margin-top:4px}
+.hdr-r{display:flex;gap:10px;align-items:center}
+.bdg{padding:5px 12px;border-radius:8px;font-size:11px;font-weight:500}
+.bdg-ok{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+.bdg-err{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.bdg-ld{background:rgba(59,130,246,.1);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:0;color:var(--muted);font-size:12px;cursor:pointer;font-family:"Outfit";transition:.2s}
+.btn:hover{border-color:var(--muted);color:var(--text)}
+.tabs{padding:20px 36px 0;display:flex;gap:6px}
+.tab{padding:12px 28px;border-radius:12px 12px 0 0;border:1px solid var(--border);border-bottom:1px solid var(--border);background:0;color:var(--dim);font-size:14px;font-weight:500;cursor:pointer;font-family:"Outfit";transition:.25s}
+.tab.a-amm{border-color:var(--blue);border-bottom:2px solid var(--blue);color:var(--blue);font-weight:700;background:linear-gradient(180deg,rgba(59,130,246,.07),transparent)}
+.tab.a-holavet{border-color:var(--green);border-bottom:2px solid var(--green);color:var(--green);font-weight:700;background:linear-gradient(180deg,rgba(16,185,129,.07),transparent)}
+.tab.a-holarene{border-color:var(--yellow);border-bottom:2px solid var(--yellow);color:var(--yellow);font-weight:700;background:linear-gradient(180deg,rgba(245,158,11,.07),transparent)}
+.tab .ct{margin-left:8px;font-size:11px;opacity:.7;font-weight:400}
+.tf{flex:1;border-bottom:1px solid var(--border)}
+.cnt{padding:24px 36px 36px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 26px;position:relative;overflow:hidden}
+.kpi .br{position:absolute;top:0;left:0;right:0;height:2px}
+.kpi .lb{color:var(--dim);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.kpi .vl{color:var(--text);font-size:34px;font-weight:800;margin:6px 0 2px;letter-spacing:-0.03em}
+.kpi .sb{color:var(--dim);font-size:12px}
+.flt{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 22px;margin-bottom:24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.flt label{color:var(--dim);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+select,.si,input[type=date]{background:#080d18;border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-size:12px;font-family:"Outfit";cursor:pointer;outline:0}
+.si{width:170px}.sp{flex:1}
+.bc{padding:7px 14px;border-radius:8px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.06);color:var(--red);font-size:11px;font-weight:600;cursor:pointer;font-family:"Outfit"}
+.chts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px}
+.cc h3{color:var(--text);font-size:15px;font-weight:600;margin-bottom:4px}
+.cc .cs{color:var(--dim);font-size:12px;margin-bottom:18px}
+.cw{position:relative;height:280px}
+.tw{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.thdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.thdr h3{font-size:15px;font-weight:600}
+.thdr .inf{color:var(--dim);font-size:12px;margin-top:3px}
+.ts{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{padding:12px 14px;text-align:left;color:var(--dim);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;user-select:none;white-space:nowrap;border-bottom:1px solid var(--border)}
+th:hover{color:var(--muted)}
+td{padding:11px 14px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border)}
+tr:hover td{background:#162032}
+.tn{font-size:13px;font-weight:500;color:var(--text)}
+.tm{font-family:"JetBrains Mono",monospace;white-space:nowrap}
+.tt{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.neo{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+.neo-s{background:rgba(16,185,129,.08);color:var(--green);border:1px solid rgba(16,185,129,.15)}
+.neo-n{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.15)}
+.neo-x{background:rgba(86,101,128,.08);color:var(--dim);border:1px solid rgba(86,101,128,.15)}
+.pg{display:flex;justify-content:center;gap:6px;padding:14px 22px;border-top:1px solid var(--border)}
+.pb{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:0;color:var(--dim);font-size:12px;cursor:pointer;font-family:"Outfit";transition:.2s}
+.pn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:0;font-size:12px;cursor:pointer;font-family:"Outfit";color:var(--text)}
+.pn:disabled{color:var(--dim);cursor:default}
+.ld{text-align:center;padding:80px;color:var(--muted)}.ld p{font-size:18px}.ld .s{font-size:13px;color:var(--dim);margin-top:8px}
+.ft{text-align:center;color:var(--dim);font-size:11px;margin-top:20px;padding-bottom:24px}
+@media(max-width:900px){.kpis,.chts{grid-template-columns:1fr}.hdr,.tabs,.cnt{padding-left:16px;padding-right:16px}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div><h1>Leads Dashboard</h1><p class="sub">Datos en vivo · sql.ar-vida.com.ar</p></div>
+  <div class="hdr-r">
+    <button class="btn" id="btnRefresh">↻ Actualizar</button>
+    <span id="lu" style="color:var(--dim);font-size:11px"></span>
+    <span class="bdg" id="sb">●</span>
+  </div>
+</div>
+<div class="tabs" id="tabs"></div>
+<div class="cnt" id="mc"><div class="ld"><p>⏳ Cargando...</p><p class="s">Conectando a la base de datos</p></div></div>
+
+<script>
+var PRODUCTS = [
+  {key: "amm", label: "AMM", color: "#3b82f6"},
+  {key: "holavet", label: "HOLAVET", color: "#10b981"},
+  {key: "holarene", label: "HOLARENE ODT", color: "#f59e0b"}
+];
+var COLORS = ["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#ec4899","#06b6d4","#84cc16","#f97316","#14b8a6"];
+
+var S = {
+  tab: 0,
+  data: {},
+  f: {campana: "Todas", neotel: "Todos", df: "", dt: "", q: ""},
+  sort: {field: "fechaIngreso", dir: "desc"},
+  pg: 1, pp: 15,
+  ch: {}
+};
+
+document.getElementById("btnRefresh").addEventListener("click", function() {
+  refreshData();
+});
+
+function esc(str) {
+  if (!str) return "";
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function fetchLeads(key, force) {
+  if (S.data[key] && !force) return Promise.resolve(S.data[key]);
+  setStatus("ld");
+  return fetch("/api/leads/" + key)
+    .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function(j) {
+      S.data[key] = j.leads || [];
+      setStatus("ok");
+      document.getElementById("lu").textContent = new Date().toLocaleTimeString("es-AR");
+      return S.data[key];
+    })
+    .catch(function(e) { setStatus("err"); throw e; });
+}
+
+function setStatus(s) {
+  var b = document.getElementById("sb");
+  if (s === "ok") { b.className = "bdg bdg-ok"; b.textContent = "● Conectado"; }
+  else if (s === "err") { b.className = "bdg bdg-err"; b.textContent = "● Error"; }
+  else { b.className = "bdg bdg-ld"; b.textContent = "● Cargando..."; }
+}
+
+function renderTabs() {
+  var html = "";
+  for (var i = 0; i < PRODUCTS.length; i++) {
+    var p = PRODUCTS[i];
+    var cls = S.tab === i ? "tab a-" + p.key : "tab";
+    var cnt = S.data[p.key] ? " (" + S.data[p.key].length.toLocaleString("es-AR") + ")" : "";
+    html += '<button class="' + cls + '" data-tab="' + i + '">' + p.label + '<span class="ct">' + cnt + '</span></button>';
+  }
+  html += '<div class="tf"></div>';
+  var el = document.getElementById("tabs");
+  el.innerHTML = html;
+  el.querySelectorAll("button").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      switchTab(parseInt(this.getAttribute("data-tab")));
+    });
+  });
+}
+
+function switchTab(i) {
+  S.tab = i;
+  S.f = {campana: "Todas", neotel: "Todos", df: "", dt: "", q: ""};
+  S.pg = 1;
+  renderTabs();
+  renderAll();
+}
+
+function getFiltered() {
+  var leads = S.data[PRODUCTS[S.tab].key] || [];
+  var r = leads.slice();
+  var f = S.f;
+  if (f.campana !== "Todas") r = r.filter(function(l) { return l.campana === f.campana; });
+  if (f.neotel !== "Todos") r = r.filter(function(l) { return f.neotel === "Si" ? l.neotel === "S" : l.neotel === "N"; });
+  if (f.df) r = r.filter(function(l) { return l.fechaIngreso >= f.df; });
+  if (f.dt) r = r.filter(function(l) { return l.fechaIngreso <= f.dt; });
+  if (f.q) {
+    var t = f.q.toLowerCase();
+    r = r.filter(function(l) {
+      return (l.nombre + " " + l.apellido).toLowerCase().indexOf(t) >= 0 ||
+        (l.email || "").toLowerCase().indexOf(t) >= 0 ||
+        (l.campana || "").toLowerCase().indexOf(t) >= 0;
+    });
+  }
+  var sf = S.sort.field;
+  var sd = S.sort.dir;
+  r.sort(function(a, b) {
+    var va = a[sf] || "";
+    var vb = b[sf] || "";
+    var c = typeof va === "string" ? va.localeCompare(vb) : va - vb;
+    return sd === "asc" ? c : -c;
+  });
+  return r;
+}
+
+function hasFilters() {
+  return S.f.campana !== "Todas" || S.f.neotel !== "Todos" || S.f.df || S.f.dt || S.f.q;
+}
+
+function renderAll() {
+  var p = PRODUCTS[S.tab];
+  var mc = document.getElementById("mc");
+
+  fetchLeads(p.key).then(function(leads) {
+    renderTabs();
+    var fl = getFiltered();
+    var campsMap = {};
+    leads.forEach(function(l) { if (l.campana) campsMap[l.campana] = true; });
+    var camps = Object.keys(campsMap).sort();
+    var ns = fl.filter(function(l) { return l.neotel === "S"; }).length;
+    var ul = leads.length ? (leads[0].fechaIngreso || "---") : "---";
+
+    var campOpts = '<option value="Todas">Todas las campa\u00f1as</option>';
+    camps.forEach(function(c) {
+      campOpts += '<option value="' + esc(c) + '"' + (S.f.campana === c ? " selected" : "") + '>' + esc(c) + '</option>';
+    });
+
+    var neoSel0 = S.f.neotel === "Todos" ? " selected" : "";
+    var neoSel1 = S.f.neotel === "Si" ? " selected" : "";
+    var neoSel2 = S.f.neotel === "No" ? " selected" : "";
+
+    mc.innerHTML =
+      '<div class="kpis">' +
+        '<div class="kpi"><div class="br" style="background:linear-gradient(90deg,' + p.color + ',transparent)"></div><p class="lb">Total Leads</p><p class="vl" id="k0">' + fl.length.toLocaleString("es-AR") + '</p><p class="sb" id="ks0">' + (fl.length !== leads.length ? "de " + leads.length.toLocaleString("es-AR") + " totales" : "en la base") + '</p></div>' +
+        '<div class="kpi"><div class="br" style="background:linear-gradient(90deg,#8b5cf6,transparent)"></div><p class="lb">Campa\u00f1as</p><p class="vl">' + camps.length + '</p><p class="sb">campa\u00f1as \u00fanicas</p></div>' +
+        '<div class="kpi"><div class="br" style="background:linear-gradient(90deg,#10b981,transparent)"></div><p class="lb">Neotel S\u00ed</p><p class="vl" id="k2">' + ns.toLocaleString("es-AR") + '</p><p class="sb" id="ks2">' + (fl.length ? ((ns / fl.length) * 100).toFixed(1) : 0) + '% del total</p></div>' +
+        '<div class="kpi"><div class="br" style="background:linear-gradient(90deg,#06b6d4,transparent)"></div><p class="lb">\u00daltimo Lead</p><p class="vl" style="font-size:22px">' + ul + '</p><p class="sb">fecha m\u00e1s reciente</p></div>' +
+      '</div>' +
+      '<div class="flt">' +
+        '<label>Filtros</label>' +
+        '<select id="fC">' + campOpts + '</select>' +
+        '<select id="fN"><option value="Todos"' + neoSel0 + '>Neotel: Todos</option><option value="Si"' + neoSel1 + '>Neotel: S\u00ed</option><option value="No"' + neoSel2 + '>Neotel: No</option></select>' +
+        '<div class="sp"></div>' +
+        '<input class="si" type="text" placeholder="Buscar..." id="fQ" value="' + esc(S.f.q) + '">' +
+        '<input type="date" id="fDf" value="' + S.f.df + '">' +
+        '<span style="color:var(--dim);font-size:12px">\u2192</span>' +
+        '<input type="date" id="fDt" value="' + S.f.dt + '">' +
+        (hasFilters() ? '<button class="bc" id="btnClear">\u2715 Limpiar</button>' : '') +
+      '</div>' +
+      '<div class="chts">' +
+        '<div class="cc"><h3>Leads por Campa\u00f1a</h3><p class="cs">Top campa\u00f1as por volumen</p><div class="cw"><canvas id="c1"></canvas></div></div>' +
+        '<div class="cc"><h3>Evoluci\u00f3n Mensual</h3><p class="cs">Leads por mes</p><div class="cw"><canvas id="c2"></canvas></div></div>' +
+        '<div class="cc"><h3>Conjunto de Anuncios</h3><p class="cs">Top ad sets</p><div class="cw"><canvas id="c3"></canvas></div></div>' +
+        '<div class="cc"><h3>Neotel</h3><p class="cs">Distribuci\u00f3n</p><div class="cw"><canvas id="c4"></canvas></div></div>' +
+      '</div>' +
+      '<div class="tw"><div class="thdr"><div><h3>Detalle \u2014 ' + p.label + '</h3><p class="inf" id="ti"></p></div></div>' +
+      '<div class="ts"><table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>' +
+      '<div class="pg" id="pgn"></div></div>' +
+      '<p class="ft">Leads Dashboard \u00b7 ' + p.label + ' \u00b7 Datos en vivo \u00b7 Auto-refresh 5 min</p>';
+
+    document.getElementById("fC").addEventListener("change", function() { S.f.campana = this.value; S.pg = 1; applyFilters(); });
+    document.getElementById("fN").addEventListener("change", function() { S.f.neotel = this.value; S.pg = 1; applyFilters(); });
+    document.getElementById("fQ").addEventListener("input", function() { S.f.q = this.value; S.pg = 1; applyFilters(); });
+    document.getElementById("fDf").addEventListener("change", function() { S.f.df = this.value; S.pg = 1; applyFilters(); });
+    document.getElementById("fDt").addEventListener("change", function() { S.f.dt = this.value; S.pg = 1; applyFilters(); });
+    var btnClear = document.getElementById("btnClear");
+    if (btnClear) btnClear.addEventListener("click", function() { clearFilters(); });
+
+    renderCharts(fl, p);
+    renderTable();
+
+  }).catch(function(e) {
+    mc.innerHTML = '<div class="ld"><p style="color:var(--red)">\u274c ' + esc(e.message) + '</p><button class="btn" id="btnRetry" style="margin-top:16px">Reintentar</button><p class="s" style="margin-top:12px">La API puede tardar ~30s en despertar</p></div>';
+    document.getElementById("btnRetry").addEventListener("click", function() { renderAll(); });
+  });
+}
+
+function applyFilters() {
+  var fl = getFiltered();
+  var leads = S.data[PRODUCTS[S.tab].key] || [];
+  renderCharts(fl, PRODUCTS[S.tab]);
+  renderTable();
+  var e0 = document.getElementById("k0");
+  if (e0) e0.textContent = fl.length.toLocaleString("es-AR");
+  var s0 = document.getElementById("ks0");
+  if (s0) s0.textContent = fl.length !== leads.length ? "de " + leads.length.toLocaleString("es-AR") + " totales" : "en la base";
+  var ns = fl.filter(function(l) { return l.neotel === "S"; }).length;
+  var e2 = document.getElementById("k2");
+  if (e2) e2.textContent = ns.toLocaleString("es-AR");
+  var s2 = document.getElementById("ks2");
+  if (s2) s2.textContent = (fl.length ? ((ns / fl.length) * 100).toFixed(1) : 0) + "% del total";
+}
+
+function clearFilters() {
+  S.f = {campana: "Todas", neotel: "Todos", df: "", dt: "", q: ""};
+  S.pg = 1;
+  renderAll();
+}
+
+function renderCharts(fl, p) {
+  Object.keys(S.ch).forEach(function(k) { S.ch[k].destroy(); });
+  S.ch = {};
+  var co = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {legend: {display: false}},
+    scales: {
+      x: {ticks: {color: "#566580", font: {size: 10, family: "Outfit"}}, grid: {color: "#1b284530"}},
+      y: {ticks: {color: "#566580", font: {size: 10, family: "Outfit"}}, grid: {color: "#1b284530"}}
+    }
+  };
+
+  var cm = {};
+  fl.forEach(function(l) { if (l.campana) cm[l.campana] = (cm[l.campana] || 0) + 1; });
+  var cd = Object.entries(cm).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 10);
+  var x1 = document.getElementById("c1");
+  if (x1 && cd.length) {
+    S.ch.c1 = new Chart(x1, {
+      type: "bar",
+      data: {
+        labels: cd.map(function(d) { return d[0].length > 30 ? d[0].slice(0, 30) + "\u2026" : d[0]; }),
+        datasets: [{data: cd.map(function(d) { return d[1]; }), backgroundColor: cd.map(function(_, i) { return COLORS[i % COLORS.length]; }), borderRadius: 6, maxBarThickness: 24}]
+      },
+      options: Object.assign({}, co, {indexAxis: "y"})
+    });
+  }
+
+  var tm = {};
+  fl.forEach(function(l) { var m = l.fechaIngreso ? l.fechaIngreso.slice(0, 7) : null; if (m) tm[m] = (tm[m] || 0) + 1; });
+  var td = Object.entries(tm).sort(function(a, b) { return a[0].localeCompare(b[0]); });
+  var x2 = document.getElementById("c2");
+  if (x2 && td.length) {
+    S.ch.c2 = new Chart(x2, {
+      type: "line",
+      data: {
+        labels: td.map(function(d) { return d[0]; }),
+        datasets: [{data: td.map(function(d) { return d[1]; }), borderColor: p.color, backgroundColor: p.color + "25", fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: p.color}]
+      },
+      options: co
+    });
+  }
+
+  var am = {};
+  fl.forEach(function(l) { if (l.conjuntoAnuncios) am[l.conjuntoAnuncios] = (am[l.conjuntoAnuncios] || 0) + 1; });
+  var ad = Object.entries(am).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 8);
+  var x3 = document.getElementById("c3");
+  if (x3 && ad.length) {
+    S.ch.c3 = new Chart(x3, {
+      type: "bar",
+      data: {
+        labels: ad.map(function(d) { return d[0].length > 25 ? d[0].slice(0, 25) + "\u2026" : d[0]; }),
+        datasets: [{data: ad.map(function(d) { return d[1]; }), backgroundColor: ad.map(function(_, i) { return COLORS[i % COLORS.length]; }), borderRadius: 6, maxBarThickness: 36}]
+      },
+      options: co
+    });
+  }
+
+  var nm = {"S\u00ed": 0, "No": 0, "Sin dato": 0};
+  fl.forEach(function(l) { if (l.neotel === "S") nm["S\u00ed"]++; else if (l.neotel === "N") nm["No"]++; else nm["Sin dato"]++; });
+  var nd = Object.entries(nm).filter(function(d) { return d[1] > 0; });
+  var nc = nd.map(function(d) { return d[0] === "S\u00ed" ? "#10b981" : d[0] === "No" ? "#ef4444" : "#566580"; });
+  var x4 = document.getElementById("c4");
+  if (x4 && nd.length) {
+    S.ch.c4 = new Chart(x4, {
+      type: "doughnut",
+      data: {
+        labels: nd.map(function(d) { return d[0]; }),
+        datasets: [{data: nd.map(function(d) { return d[1]; }), backgroundColor: nc, borderWidth: 0, spacing: 4}]
+      },
+      options: {responsive: true, maintainAspectRatio: false, cutout: "60%", plugins: {legend: {position: "bottom", labels: {color: "#8896b0", font: {family: "Outfit", size: 12}, padding: 16}}}}
+    });
+  }
+}
+
+function renderTable() {
+  var fl = getFiltered();
+  var tp = Math.ceil(fl.length / S.pp);
+  var st = (S.pg - 1) * S.pp;
+  var rw = fl.slice(st, st + S.pp);
+  var cols = [
+    {k: "fechaIngreso", l: "Fecha"}, {k: "nombre", l: "Nombre"}, {k: "email", l: "Email"},
+    {k: "telefono1", l: "Tel\u00e9fono"}, {k: "campana", l: "Campa\u00f1a"}, {k: "conjuntoAnuncios", l: "Ad Set"},
+    {k: "anuncio", l: "Anuncio"}, {k: "neotel", l: "Neotel"}
+  ];
+
+  var hd = document.getElementById("thead");
+  if (hd) {
+    var hhtml = "";
+    cols.forEach(function(c) {
+      var arrow = S.sort.field === c.k ? (S.sort.dir === "asc" ? " \u25b2" : " \u25bc") : ' <span style="opacity:.25">\u25bc</span>';
+      hhtml += '<th data-sort="' + c.k + '">' + c.l + arrow + '</th>';
+    });
+    hd.innerHTML = hhtml;
+    hd.querySelectorAll("th").forEach(function(th) {
+      th.addEventListener("click", function() {
+        var f = this.getAttribute("data-sort");
+        if (S.sort.field === f) S.sort.dir = S.sort.dir === "asc" ? "desc" : "asc";
+        else { S.sort.field = f; S.sort.dir = "desc"; }
+        renderTable();
+      });
+    });
+  }
+
+  var ti = document.getElementById("ti");
+  if (ti) ti.textContent = fl.length.toLocaleString("es-AR") + " resultados \u00b7 P\u00e1gina " + S.pg + "/" + (tp || 1);
+
+  var bd = document.getElementById("tbody");
+  if (bd) {
+    if (!rw.length) {
+      bd.innerHTML = '<tr><td colspan="8" style="padding:40px;text-align:center;color:var(--dim)">No se encontraron leads</td></tr>';
+    } else {
+      var bhtml = "";
+      rw.forEach(function(l) {
+        var neo = l.neotel === "S" ? '<span class="neo neo-s">S\u00ed</span>' : l.neotel === "N" ? '<span class="neo neo-n">No</span>' : '<span class="neo neo-x">\u2014</span>';
+        bhtml += '<tr>' +
+          '<td class="tm">' + esc(l.fechaIngreso) + '</td>' +
+          '<td class="tn">' + esc(l.nombre) + ' ' + esc(l.apellido) + '</td>' +
+          '<td class="tt">' + esc(l.email) + '</td>' +
+          '<td class="tm">' + esc(l.telefono1) + '</td>' +
+          '<td class="tt">' + esc(l.campana) + '</td>' +
+          '<td class="tt" style="max-width:140px;color:var(--dim)">' + esc(l.conjuntoAnuncios) + '</td>' +
+          '<td class="tt" style="max-width:140px;color:var(--dim)">' + esc(l.anuncio) + '</td>' +
+          '<td>' + neo + '</td></tr>';
+      });
+      bd.innerHTML = bhtml;
+    }
+  }
+
+  var pgn = document.getElementById("pgn");
+  if (!pgn) return;
+  if (tp <= 1) { pgn.innerHTML = ""; return; }
+  var pc = PRODUCTS[S.tab].color;
+  var ph = '<button class="pn" ' + (S.pg === 1 ? "disabled" : "") + ' data-pg="' + (S.pg - 1) + '" style="color:' + (S.pg === 1 ? "var(--dim)" : "var(--text)") + '">\u2190 Ant</button>';
+  var sp = Math.max(1, S.pg - 3);
+  var ep = Math.min(tp, sp + 6);
+  if (ep - sp < 6) sp = Math.max(1, ep - 6);
+  for (var i = sp; i <= ep; i++) {
+    var a = i === S.pg;
+    ph += '<button class="pb" data-pg="' + i + '" style="border-color:' + (a ? pc : "var(--border)") + ';background:' + (a ? pc + "18" : "transparent") + ';color:' + (a ? pc : "var(--dim)") + ';font-weight:' + (a ? 700 : 400) + '">' + i + '</button>';
+  }
+  ph += '<button class="pn" ' + (S.pg === tp ? "disabled" : "") + ' data-pg="' + (S.pg + 1) + '" style="color:' + (S.pg === tp ? "var(--dim)" : "var(--text)") + '">Sig \u2192</button>';
+  pgn.innerHTML = ph;
+  pgn.querySelectorAll("button").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var pg = parseInt(this.getAttribute("data-pg"));
+      if (pg >= 1 && pg <= tp) { S.pg = pg; renderTable(); }
+    });
+  });
+}
+
+function refreshData() {
+  fetchLeads(PRODUCTS[S.tab].key, true).then(function() {
+    renderTabs();
+    renderAll();
+  });
+}
+
+renderTabs();
+renderAll();
+setInterval(function() {
+  fetchLeads(PRODUCTS[S.tab].key, true).then(function() { renderTabs(); renderAll(); });
+}, 5 * 60 * 1000);
+</script>
+</body>
+</html>
