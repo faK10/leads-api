@@ -6,9 +6,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ═══════════════════════════════════════════════════════════════
-// DATABASE CONFIG
-// ═══════════════════════════════════════════════════════════════
 const SERVER = process.env.DB_SERVER || "sql.ar-vida.com.ar";
 const USER = process.env.DB_USER;
 const PASSWORD = process.env.DB_PASSWORD;
@@ -42,17 +39,12 @@ const pools = {};
 async function getPool(producto) {
   const key = producto.toLowerCase();
   if (!DB_MAP[key]) throw new Error(`Producto no válido: ${producto}`);
-
   if (!pools[key] || !pools[key].connected) {
     pools[key] = await new sql.ConnectionPool(makeConfig(DB_MAP[key])).connect();
     console.log(`✅ Conectado: ${key} → ${DB_MAP[key]}`);
   }
   return pools[key];
 }
-
-// ═══════════════════════════════════════════════════════════════
-// ENDPOINTS
-// ═══════════════════════════════════════════════════════════════
 
 // Health check
 app.get("/", (req, res) => {
@@ -79,14 +71,12 @@ app.get("/api/leads/:producto", async (req, res) => {
         Anuncio AS anuncio,
         Tipo_Telefono AS tipoTelefono,
         Neotel AS neotel,
-        Comentarios AS comentarios,
-        Prefijo AS prefijo,
-        Provincia AS provincia
+        Comentarios AS comentarios
       FROM Leads_Final
       WHERE 1=1
     `;
 
-    const { campana, fechaDesde, fechaHasta, provincia, buscar, neotel } = req.query;
+    const { campana, fechaDesde, fechaHasta, buscar, neotel } = req.query;
 
     if (campana) {
       query += ` AND Campana = @campana`;
@@ -99,10 +89,6 @@ app.get("/api/leads/:producto", async (req, res) => {
     if (fechaHasta) {
       query += ` AND Fecha_Ingreso_Leads <= @fechaHasta`;
       request.input("fechaHasta", sql.DateTime, new Date(fechaHasta + "T23:59:59"));
-    }
-    if (provincia) {
-      query += ` AND Provincia = @provincia`;
-      request.input("provincia", sql.NVarChar, provincia);
     }
     if (buscar) {
       query += ` AND (Nombre LIKE @buscar OR Apellido LIKE @buscar OR Correo_Electronico LIKE @buscar)`;
@@ -151,7 +137,6 @@ app.get("/api/stats/:producto", async (req, res) => {
     const query = `
       SELECT COUNT(*) AS totalLeads,
              COUNT(DISTINCT Campana) AS totalCampanas,
-             COUNT(DISTINCT Provincia) AS totalProvincias,
              MIN(Fecha_Ingreso_Leads) AS primerLead,
              MAX(Fecha_Ingreso_Leads) AS ultimoLead
       FROM Leads_Final ${where};
@@ -159,10 +144,6 @@ app.get("/api/stats/:producto", async (req, res) => {
       SELECT Campana AS campana, COUNT(*) AS cantidad
       FROM Leads_Final ${where}
       GROUP BY Campana ORDER BY cantidad DESC;
-
-      SELECT Provincia AS provincia, COUNT(*) AS cantidad
-      FROM Leads_Final ${where}
-      GROUP BY Provincia ORDER BY cantidad DESC;
 
       SELECT CONVERT(VARCHAR(7), Fecha_Ingreso_Leads, 120) AS mes, COUNT(*) AS cantidad
       FROM Leads_Final ${where}
@@ -179,9 +160,8 @@ app.get("/api/stats/:producto", async (req, res) => {
       producto: req.params.producto,
       resumen: result.recordsets[0][0],
       porCampana: result.recordsets[1],
-      porProvincia: result.recordsets[2],
-      porMes: result.recordsets[3],
-      porNeotel: result.recordsets[4],
+      porMes: result.recordsets[2],
+      porNeotel: result.recordsets[3],
     });
   } catch (err) {
     console.error("❌ Error stats:", err.message);
@@ -194,15 +174,13 @@ app.get("/api/filters/:producto", async (req, res) => {
   try {
     const pool = await getPool(req.params.producto);
 
-    const [campanas, provincias] = await Promise.all([
-      pool.request().query(`SELECT DISTINCT Campana AS campana FROM Leads_Final WHERE Campana IS NOT NULL ORDER BY Campana`),
-      pool.request().query(`SELECT DISTINCT Provincia AS provincia FROM Leads_Final WHERE Provincia IS NOT NULL ORDER BY Provincia`),
-    ]);
+    const campanas = await pool.request().query(
+      `SELECT DISTINCT Campana AS campana FROM Leads_Final WHERE Campana IS NOT NULL ORDER BY Campana`
+    );
 
     res.json({
       producto: req.params.producto,
       campanas: campanas.recordset.map((r) => r.campana),
-      provincias: provincias.recordset.map((r) => r.provincia),
     });
   } catch (err) {
     console.error("❌ Error filters:", err.message);
@@ -210,9 +188,6 @@ app.get("/api/filters/:producto", async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// START SERVER
-// ═══════════════════════════════════════════════════════════════
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Leads API corriendo en puerto ${PORT}`);
